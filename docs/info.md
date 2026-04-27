@@ -1,20 +1,38 @@
-<!---
-
-This file is used to generate your project datasheet. Please fill in the information below and delete any unused
-sections.
-
-You can also include images in this folder and reference them in the markdown. Each image must be less than
-512 kb in size, and the combined size of all images must be less than 1 MB.
--->
-
 ## How it works
 
-Explain how your project works
+This project implements a 1st-order IIR (Infinite Impulse Response) low-pass filter
+using an exponential moving average algorithm. The filter equation is:
+
+**y[n] = y[n-1] - (y[n-1] >> 3) + (x[n] >> 3)**
+
+An 11-bit internal accumulator holds the scaled filter state, with the top 8 bits
+output as the filtered result. The design uses only shift-and-add operations —
+no multipliers — making it extremely compact. It synthesizes to approximately
+11 D flip-flops (the accumulator register) and two full-adder chains for the
+subtract and add operations. The right shifts are free — they are just rewired
+connections with no gate cost.
+
+The smoothing factor alpha = 1/8 (ALPHA = 3), meaning each output sample moves
+1/8th of the remaining distance toward the input. This gives strong low-pass
+smoothing, rejecting high-frequency noise and sudden jumps in the input signal.
 
 ## How to test
 
-Explain how to use your project
+1. Apply an 8-bit unsigned sample to `ui[7:0]` on each rising clock edge.
+2. Read the filtered 8-bit output from `uo[7:0]`.
+3. Reset the filter at any time by pulling `rst_n` low — this clears the
+   accumulator to zero.
 
-## External hardware
+**Step response test:** Hold the input at a constant value (e.g. 200) and observe
+`uo[7:0]` gradually rising toward that value over approximately 30-40 clock cycles,
+confirming the exponential settling behaviour.
 
-List external hardware used in your project (e.g. PMOD, LED display, etc), if any
+**Noise rejection test:** Apply a rapidly alternating input (e.g. toggling between
+0 and 255 every cycle) and observe that the output settles to a stable midpoint
+value (~127), confirming high-frequency noise is being filtered out.
+
+To tune the cutoff frequency, change `localparam ALPHA` in `project.v`:
+- ALPHA = 1 → light smoothing (higher cutoff)
+- ALPHA = 3 → strong smoothing (lower cutoff, default)
+- ALPHA = 4 → very heavy smoothing
+
