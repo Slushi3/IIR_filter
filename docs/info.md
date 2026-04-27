@@ -12,7 +12,7 @@ smoothing, rejecting high-frequency noise and sudden jumps in the input signal.
 
 1. Apply an 8-bit unsigned sample to `ui[7:0]` on each rising clock edge.
 2. Read the filtered 8-bit output from `uo[7:0]`.
-3. Reset the filter at any time by pulling `rst_n` low — this clears the
+3. Reset the filter at any time by pulling `rst_n` low this clears the
    accumulator to zero.
 
 **Step response test:** Hold the input at a constant value (e.g. 200) and observe
