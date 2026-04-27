@@ -36,3 +36,7 @@ To tune the cutoff frequency, change `localparam ALPHA` in `project.v`:
 - ALPHA = 3 → strong smoothing (lower cutoff, default)
 - ALPHA = 4 → very heavy smoothing
 
+## External hardware
+
+None. The filter is entirely self-contained. 
+
