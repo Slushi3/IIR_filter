@@ -3,12 +3,7 @@
 This project implements a 1st-order IIR (Infinite Impulse Response) low-pass filter
 using an exponential moving average algorithm. 
 An 11-bit internal accumulator holds the scaled filter state, with the top 8 bits
-output as the filtered result. The design uses only shift-and-add operations —
-no multipliers — making it extremely compact. It synthesizes to approximately
-11 D flip-flops (the accumulator register) and two full-adder chains for the
-subtract and add operations. The right shifts are free — they are just rewired
-connections with no gate cost.
-
+output as the filtered result. 
 The smoothing factor alpha = 1/8 (ALPHA = 3), meaning each output sample moves
 1/8th of the remaining distance toward the input. This gives strong low-pass
 smoothing, rejecting high-frequency noise and sudden jumps in the input signal.
