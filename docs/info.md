@@ -1,10 +1,7 @@
 ## How it works
 
 This project implements a 1st-order IIR (Infinite Impulse Response) low-pass filter
-using an exponential moving average algorithm. The filter equation is:
-
-**y[n] = y[n-1] - (y[n-1] >> 3) + (x[n] >> 3)**
-
+using an exponential moving average algorithm. 
 An 11-bit internal accumulator holds the scaled filter state, with the top 8 bits
 output as the filtered result. The design uses only shift-and-add operations —
 no multipliers — making it extremely compact. It synthesizes to approximately
