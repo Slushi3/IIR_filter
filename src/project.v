@@ -1,27 +1,52 @@
 /*
- * Copyright (c) 2024 Your Name
+ * Copyright (c) 2024 Elton DMello
  * SPDX-License-Identifier: Apache-2.0
+ *
+ * 1st-order IIR Low-pass (Exponential Moving Average)
+ * Uses shift-and-subtract only — no multipliers.
+ *
+ * Equation (integer domain, scaled by 2^ALPHA):
+ *   acc <= acc - (acc >> ALPHA) + ui_in
+ *
+ * Output = acc >> ALPHA  (top 8 bits of scaled accumulator)
+ * With ALPHA=3: smoothing factor α ≈ 0.125, strong low-pass.
  */
-
 `default_nettype none
 
 module tt_um_example (
-    input  wire [7:0] ui_in,    // Dedicated inputs
-    output wire [7:0] uo_out,   // Dedicated outputs
-    input  wire [7:0] uio_in,   // IOs: Input path
-    output wire [7:0] uio_out,  // IOs: Output path
-    output wire [7:0] uio_oe,   // IOs: Enable path (active high: 0=input, 1=output)
-    input  wire       ena,      // always 1 when the design is powered, so you can ignore it
-    input  wire       clk,      // clock
-    input  wire       rst_n     // reset_n - low to reset
+    input  wire [7:0] ui_in,   // 8-bit unsigned PCM / sensor sample in
+    output wire [7:0] uo_out,  // 8-bit low-pass filtered output
+    input  wire [7:0] uio_in,
+    output wire [7:0] uio_out,
+    output wire [7:0] uio_oe,
+    input  wire       ena,
+    input  wire       clk,
+    input  wire       rst_n
 );
 
-  // All output pins must be assigned. If not used, assign to 0.
-  assign uo_out  = ui_in + uio_in;  // Example: ou_out is the sum of ui_in and uio_in
-  assign uio_out = 0;
-  assign uio_oe  = 0;
+  // ALPHA controls cutoff: higher = more smoothing (lower cutoff)
+  // ALPHA=3 → α=1/8.  ACC needs 8 + ALPHA bits to hold scaled value.
+  localparam ALPHA = 3;
+  localparam ACC_W = 8 + ALPHA; // 11 bits
 
-  // List all unused inputs to prevent warnings
-  wire _unused = &{ena, clk, rst_n, 1'b0};
+  reg [ACC_W-1:0] acc;
+
+  always @(posedge clk or negedge rst_n) begin
+    if (!rst_n) begin
+      acc <= 0;
+    end else begin
+      // acc holds y[n] * 2^ALPHA
+      // y[n] = y[n-1]*(1 - 1/8) + x[n]*(1/8)
+      // scaled: acc_new = acc - (acc>>ALPHA) + ui_in
+      acc <= acc - (acc >> ALPHA) + {3'b000, ui_in};
+    end
+  end
+
+  // Divide back down: output = acc / 2^ALPHA = acc >> ALPHA
+  assign uo_out  = acc[ACC_W-1:ALPHA]; // bits [10:3] → 8-bit result
+  assign uio_out = 8'b0;
+  assign uio_oe  = 8'b0;
+
+  wire _unused = &{ena, uio_in, 1'b0};
 
 endmodule
